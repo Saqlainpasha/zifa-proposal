@@ -62,7 +62,15 @@ function openSite() {
   setTimeout(() => gate.remove(), 900);
 }
 
-openBtn.addEventListener('click', openSite);
+openBtn.addEventListener('pointerup', (e) => {
+  e.preventDefault();
+  openSite();
+});
+
+openBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  openSite();
+});
 envelope.addEventListener('click', openSite);
 envelope.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') openSite();
