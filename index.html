@@ -8,20 +8,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<base target="_blank">
 </head>
-<body>
+<body class="locked">
 
-<!-- Tiny personal line at the very top -->
 <p class="top-line">Made only for Zifa 🤍</p>
 
-<!-- Scroll progress indicator -->
 <div class="progress-bar" id="progressBar"></div>
 
-<!-- Floating mute / unmute button (appears after the gate opens) -->
 <button class="mute-btn" id="muteBtn" aria-label="Mute or unmute music" hidden>🎵</button>
 
-<!-- Petals falling in the background -->
 <canvas id="petalCanvas" aria-hidden="true"></canvas>
 
 <!-- ══════════════ 0. WELCOME GATE ══════════════ -->
@@ -37,7 +32,7 @@
   <p class="gate-hint">(sound on 🔊)</p>
 </section>
 
-<!-- ══════════════ MAIN CONTENT (hidden until gate opens) ══════════════ -->
+<!-- ══════════════ MAIN CONTENT ══════════════ -->
 <main id="mainContent" hidden>
 
   <!-- 1. INTRO -->
@@ -58,7 +53,7 @@
       <article class="card timeline-card">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo1.jpg" alt="Zifa aur main — mohalle ke din" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo1.jpg" alt="Zifa aur main — mohalle ke din" loading="lazy">
         </div>
         <p class="card-text">Hum ek hi mohalle mein the, par kabhi theek se mile hi nahi.</p>
       </article>
@@ -66,7 +61,7 @@
       <article class="card timeline-card">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo2.jpg" alt="Bangalore — pehla text" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo2.jpg" alt="Bangalore — pehla text" loading="lazy">
         </div>
         <p class="card-text">Phir Bangalore aaye, aur ek din maine text kiya ki tumhara office mere office ke bilkul paas hai.</p>
       </article>
@@ -74,7 +69,7 @@
       <article class="card timeline-card">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo3.jpg" alt="Tournament jeet — Zifa ko dedicate" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo3.jpg" alt="Tournament jeet — Zifa ko dedicate" loading="lazy">
         </div>
         <p class="card-text">Tumhari wajah se meri tournament jeet hui, aur maine woh jeet tumhe dedicate ki.</p>
       </article>
@@ -82,7 +77,7 @@
       <article class="card timeline-card">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo4.jpg" alt="Aur phir hum, hum ban gaye" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo4.jpg" alt="Aur phir hum, hum ban gaye" loading="lazy">
         </div>
         <p class="card-text">Aur phir hum, hum ban gaye.</p>
       </article>
@@ -111,7 +106,7 @@
       <figure class="polaroid">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo1.jpg" alt="Yaad 1" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo1.jpg" alt="Yaad 1" loading="lazy">
         </div>
         <figcaption>[EDIT ME — caption 1]</figcaption>
       </figure>
@@ -119,7 +114,7 @@
       <figure class="polaroid">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo2.jpeg" alt="Yaad 2" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo2.jpg" alt="Yaad 2" loading="lazy">
         </div>
         <figcaption>[EDIT ME — caption 2]</figcaption>
       </figure>
@@ -127,7 +122,7 @@
       <figure class="polaroid">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo3.jpg" alt="Yaad 3" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo3.jpg" alt="Yaad 3" loading="lazy">
         </div>
         <figcaption>[EDIT ME — caption 3]</figcaption>
       </figure>
@@ -135,7 +130,7 @@
       <figure class="polaroid">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo4.jpeg" alt="Yaad 4" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo4.jpg" alt="Yaad 4" loading="lazy">
         </div>
         <figcaption>[EDIT ME — caption 4]</figcaption>
       </figure>
@@ -143,7 +138,7 @@
       <figure class="polaroid">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo5.jpeg" alt="Yaad 5" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo5.jpg" alt="Yaad 5" loading="lazy">
         </div>
         <figcaption>[EDIT ME — caption 5]</figcaption>
       </figure>
@@ -151,7 +146,7 @@
       <figure class="polaroid">
         <div class="photo-frame">
           <span class="lily-loader">🌸</span>
-          <img src="assets/photo6.jpg" alt="Yaad 6" loading="lazy" onerror="this.closest('.photo-frame').classList.add('img-missing'); this.remove();">
+          <img src="assets/photo6.jpg" alt="Yaad 6" loading="lazy">
         </div>
         <figcaption>[EDIT ME — caption 6]</figcaption>
       </figure>
@@ -199,12 +194,11 @@
 
 <!-- 8. YES RESULT SCREEN -->
 <section class="yes-screen" id="yesScreen" hidden>
-  <canvas id="confettiCanvas" aria-hidden="true"></canvas>
   <div class="yes-content">
     <p class="script-accent yes-accent">She said YES!</p>
     <h2 class="yes-title">Mujhe pata tha 🥹❤️</h2>
 
-    <!-- [EDIT ME] ── Apna heartfelt message yahan likho, jitna marzi lamba ── -->
+    <!-- [EDIT ME] ── Apna heartfelt message yahan likho ── -->
     <p class="yes-message">
       Zifa, aaj se tum sirf meri ho. Tumhari har muskaan meri jeet hai,
       aur har din tumhare saath meri duaon ka jawab hai. I promise to love you
@@ -220,6 +214,8 @@
     <button class="btn btn-primary" id="replayBtn">Replay our story 🔁</button>
   </div>
 </section>
+
+<canvas id="confettiCanvas" aria-hidden="true"></canvas>
 
 <script src="script.js"></script>
 </body>
