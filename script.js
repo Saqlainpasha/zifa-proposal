@@ -59,6 +59,7 @@ function fadeMusic(target, durationMs = 2000) {
 
 /* Open website — supports mouse, touch and keyboard */
 function openSite(e) {
+  alert("Open button clicked!");
   if (e) e.preventDefault();
 
   if (gate.classList.contains('opened')) return;
