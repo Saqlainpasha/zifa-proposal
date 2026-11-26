@@ -1,7 +1,6 @@
-
 /* ═══════════════════════════════════════════════
    Zifa's Proposal — script.js
-   Stable iPhone + desktop version
+   Android-safe version
    ═══════════════════════════════════════════════ */
 
 'use strict';
@@ -25,6 +24,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const yesScreen = $('yesScreen');
   const replayBtn = $('replayBtn');
   const officialDate = $('officialDate');
+
+  /* ══════════ IMAGE FALLBACKS (.jpg / .jpeg / .JPG / .png) ══════════ */
+
+  const EXTS = ['jpg', 'jpeg', 'JPG', 'JPEG', 'png', 'PNG'];
+
+  function handleImgError(img) {
+    const frame = img.closest('.photo-frame');
+    const tried = (img.dataset.tried || '').split(',').filter(Boolean);
+    const m = img.getAttribute('src').match(/^(.*)\.([A-Za-z]+)$/);
+
+    if (m) {
+      tried.push(m[2]);
+      const next = EXTS.find((e) => !tried.includes(e));
+      if (next) {
+        img.dataset.tried = tried.join(',');
+        img.src = m[1] + '.' + next;
+        return;
+      }
+    }
+    if (frame) frame.classList.add('img-missing');
+    img.style.display = 'none';
+  }
+
+  document.querySelectorAll('.photo-frame img').forEach((img) => {
+    img.addEventListener('error', () => handleImgError(img));
+    if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) {
+      handleImgError(img);
+    }
+  });
 
   /* ── Music ── */
   const music = new Audio('assets/music.mp3');
@@ -68,18 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (siteOpened) return;
     siteOpened = true;
 
-    if (gate) {
-      gate.classList.add('opened');
-    }
+    document.body.classList.remove('locked');
 
-    if (mainContent) {
-      mainContent.hidden = false;
-      mainContent.style.display = 'block';
-    }
-
-    if (muteBtn) {
-      muteBtn.hidden = false;
-    }
+    if (gate) gate.classList.add('opened');
+    if (mainContent) mainContent.hidden = false;
+    if (muteBtn) muteBtn.hidden = false;
 
     music.play().then(() => {
       musicStarted = true;
@@ -100,15 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (envelope) {
     envelope.addEventListener('click', openSite);
-
-    envelope.addEventListener('touchend', openSite, {
-      passive: false
-    });
-
+    envelope.addEventListener('touchend', openSite, { passive: false });
     envelope.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        openSite(e);
-      }
+      if (e.key === 'Enter' || e.key === ' ') openSite(e);
     });
   }
 
@@ -139,6 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    video.addEventListener('click', () => {
+      if (!video.paused) video.pause();
+    });
+
     video.addEventListener('play', () => {
       button.classList.add('hidden');
       if (musicStarted && !musicMuted) fadeMusic(0.1, 600);
@@ -146,9 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function restoreMusic() {
       button.classList.remove('hidden');
-      if (musicStarted && !musicMuted) {
-        fadeMusic(MUSIC_FULL, 600);
-      }
+      if (musicStarted && !musicMuted) fadeMusic(MUSIC_FULL, 600);
     }
 
     video.addEventListener('pause', restoreMusic);
@@ -180,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
           revealObserver.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.15 });
+    }, { threshold: 0.1 });
 
     document.querySelectorAll('.reveal').forEach((el) => {
       revealObserver.observe(el);
@@ -189,10 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (questionSec) {
       new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
-          document.body.classList.toggle(
-            'question-active',
-            entry.isIntersecting
-          );
+          document.body.classList.toggle('question-active', entry.isIntersecting);
         });
       }, { threshold: 0.4 }).observe(questionSec);
     }
@@ -212,20 +226,16 @@ document.addEventListener('DOMContentLoaded', () => {
       eggTaps++;
       clearTimeout(eggTimer);
 
-      eggTimer = setTimeout(() => {
-        eggTaps = 0;
-      }, 1200);
+      eggTimer = setTimeout(() => { eggTaps = 0; }, 1200);
 
       if (eggTaps >= 3) {
         eggTaps = 0;
 
         const toast = document.createElement('div');
         toast.className = 'egg-toast';
-        toast.textContent =
-          'Tumhara favourite phool, mere favourite insaan ke liye 🌸';
+        toast.textContent = 'Tumhara favourite phool, mere favourite insaan ke liye 🌸';
 
         document.body.appendChild(toast);
-
         requestAnimationFrame(() => toast.classList.add('show'));
 
         setTimeout(() => {
@@ -249,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let noAttempts = 0;
   const MAX_ATTEMPTS = 8;
   const SAFE_MARGIN = 16;
+  const TOP_MARGIN = 48;
   const BTN_GAP = 24;
 
   function rectsOverlap(a, b, gap) {
@@ -263,6 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function dodgeNo() {
     if (!noBtn || !yesBtn) return;
 
+    /* Move to <body> so no parent can break position:fixed */
+    if (noBtn.parentElement !== document.body) {
+      document.body.appendChild(noBtn);
+    }
+
+    noBtn.classList.add('dodging');
+
     const btnW = noBtn.offsetWidth;
     const btnH = noBtn.offsetHeight;
 
@@ -271,27 +289,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const yesRect = yesBtn.getBoundingClientRect();
 
-    for (let tries = 0; tries < 30; tries++) {
-      const x = SAFE_MARGIN +
-        Math.random() * Math.max(0, maxX - SAFE_MARGIN);
+    for (let tries = 0; tries < 40; tries++) {
+      const x = SAFE_MARGIN + Math.random() * Math.max(0, maxX - SAFE_MARGIN);
+      const y = TOP_MARGIN + Math.random() * Math.max(0, maxY - TOP_MARGIN);
 
-      const y = SAFE_MARGIN +
-        Math.random() * Math.max(0, maxY - SAFE_MARGIN);
-
-      const candidate = {
-        left: x,
-        top: y,
-        right: x + btnW,
-        bottom: y + btnH
-      };
+      const candidate = { left: x, top: y, right: x + btnW, bottom: y + btnH };
 
       if (!rectsOverlap(candidate, yesRect, BTN_GAP)) {
-        noBtn.style.position = 'fixed';
         noBtn.style.left = x + 'px';
         noBtn.style.top = y + 'px';
         return;
       }
     }
+
+    /* Fallback: top-right corner */
+    noBtn.style.left = Math.max(SAFE_MARGIN, maxX) + 'px';
+    noBtn.style.top = TOP_MARGIN + 'px';
   }
 
   function handleNoAttempt(e) {
@@ -301,41 +314,29 @@ document.addEventListener('DOMContentLoaded', () => {
     e.stopPropagation();
 
     noAttempts++;
-    noBtn.classList.add('dodging');
     dodgeNo();
 
     if (noMessage) {
-      noMessage.textContent =
-        noMessages[(noAttempts - 1) % noMessages.length];
+      noMessage.textContent = noMessages[(noAttempts - 1) % noMessages.length];
     }
 
-    const noScale = Math.max(0.5, 1 - 0.08 * noAttempts);
-    const yesScale = 1 + 0.08 * noAttempts;
+    const noScale = Math.max(0.6, 1 - 0.08 * noAttempts);
+    const yesScale = Math.min(1.6, 1 + 0.08 * noAttempts);
 
     noBtn.style.transform = `scale(${noScale})`;
-
-    const yesCurrentW = yesBtn.offsetWidth;
-    const yesMaxW = window.innerWidth * 0.9;
-
-    yesBtn.style.width = Math.min(
-      yesCurrentW * (
-        yesScale / (1 + 0.08 * (noAttempts - 1))
-      ),
-      yesMaxW
-    ) + 'px';
-
-    yesBtn.style.fontSize =
-      Math.min(18 + noAttempts * 1.5, 26) + 'px';
+    yesBtn.style.transform = `scale(${yesScale})`;
 
     if (noAttempts >= MAX_ATTEMPTS) {
       noBtn.textContent = 'Okay, YES 😌';
-      if (noMessage) {
-        noMessage.textContent = 'Maan hi gaye na? ❤️';
-      }
+      noBtn.style.transform = 'scale(1)';
+      if (noMessage) noMessage.textContent = 'Maan hi gaye na? ❤️';
     }
   }
 
   if (noBtn) {
+    noBtn.addEventListener('touchstart', handleNoAttempt, { passive: false });
+    noBtn.addEventListener('mouseover', handleNoAttempt);
+
     noBtn.addEventListener('click', (e) => {
       if (noAttempts < MAX_ATTEMPTS) {
         handleNoAttempt(e);
@@ -343,37 +344,30 @@ document.addEventListener('DOMContentLoaded', () => {
         sayYes();
       }
     });
-
-    noBtn.addEventListener('touchstart', handleNoAttempt, {
-      passive: false
-    });
-
-    noBtn.addEventListener('mouseover', handleNoAttempt);
   }
 
   /* ══════════ YES BUTTON ══════════ */
 
+  let saidYes = false;
+
   function sayYes() {
+    if (saidYes) return;
+    saidYes = true;
+
     if (navigator.vibrate) navigator.vibrate(200);
     startConfetti();
     showYesScreen();
   }
 
-  if (yesBtn) {
-    yesBtn.addEventListener('click', sayYes);
-  }
+  if (yesBtn) yesBtn.addEventListener('click', sayYes);
 
   function fillOfficialDate() {
     if (!officialDate) return;
 
     const d = new Date();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    officialDate.textContent =
-      `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    officialDate.textContent = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
 
   function showYesScreen() {
@@ -382,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fillOfficialDate();
     yesScreen.hidden = false;
 
-    fadeMusic(0, 1500);
+    fadeMusic(0.25, 1500);
 
     requestAnimationFrame(() => {
       yesScreen.classList.add('show');
@@ -394,21 +388,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (replayBtn && yesScreen) {
     replayBtn.addEventListener('click', () => {
       stopConfetti();
+      saidYes = false;
 
       yesScreen.classList.remove('show');
       document.body.style.overflow = '';
 
       setTimeout(() => {
         yesScreen.hidden = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-
-        if (musicStarted && !musicMuted) {
-          fadeMusic(MUSIC_FULL, 1000);
-        }
+        if (musicStarted && !musicMuted) fadeMusic(MUSIC_FULL, 1000);
       }, 1000);
     });
   }
@@ -416,18 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ══════════ CONFETTI ══════════ */
 
   const confettiCanvas = $('confettiCanvas');
-  const cctx = confettiCanvas
-    ? confettiCanvas.getContext('2d')
-    : null;
+  const cctx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
 
   let confettiPieces = [];
   let confettiRunning = false;
 
-  const CONFETTI_COLORS = [
-    '#F8D7E0', '#E6DDF5', '#DCE8D8',
-    '#FFF8F2', '#F8AFC4', '#C9B6F2'
-  ];
-
+  const CONFETTI_COLORS = ['#F8D7E0', '#E6DDF5', '#DCE8D8', '#FFF8F2', '#F8AFC4', '#C9B6F2'];
   const CONFETTI_EMOJI = ['🌸', '❤️'];
 
   function sizeConfettiCanvas() {
@@ -471,9 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 
-    confettiPieces = confettiPieces.filter(
-      (p) => p.y < confettiCanvas.height + 30
-    );
+    confettiPieces = confettiPieces.filter((p) => p.y < confettiCanvas.height + 30);
 
     confettiPieces.forEach((p) => {
       p.y += p.vy;
@@ -515,9 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ══════════ FALLING PETALS ══════════ */
 
   const petalCanvas = $('petalCanvas');
-  const pctx = petalCanvas
-    ? petalCanvas.getContext('2d')
-    : null;
+  const pctx = petalCanvas ? petalCanvas.getContext('2d') : null;
 
   const reduceMotion = window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -539,7 +518,8 @@ document.addEventListener('DOMContentLoaded', () => {
       vy: 0.3 + Math.random() * 0.6,
       sway: Math.random() * Math.PI * 2,
       swaySpeed: 0.005 + Math.random() * 0.01,
-      alpha: 0.25 + Math.random() * 0.3
+      alpha: 0.25 + Math.random() * 0.3,
+      color: Math.random() < 0.5 ? '#F8AFC4' : '#C9B6F2'
     };
   }
 
@@ -551,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxPetals = window.innerWidth < 500 ? 12 : 20;
 
     while (petals.length < maxPetals) {
-      petals.push(makePetal(false));
+      petals.push(makePetal(true));
     }
 
     petals.forEach((p) => {
@@ -567,9 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pctx.translate(p.x, p.y);
       pctx.rotate(p.sway);
       pctx.globalAlpha = p.alpha;
-
-      pctx.fillStyle =
-        Math.random() < 0.5 ? '#F8AFC4' : '#C9B6F2';
+      pctx.fillStyle = p.color;
 
       pctx.beginPath();
       pctx.ellipse(0, 0, p.s / 2, p.s / 3.2, 0, 0, Math.PI * 2);
@@ -584,9 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sizePetalCanvas();
     window.addEventListener('resize', sizePetalCanvas);
 
-    if (!reduceMotion) {
-      requestAnimationFrame(petalLoop);
-    }
+    if (!reduceMotion) requestAnimationFrame(petalLoop);
   }
 
   console.log('Zifa website initialized successfully 💌');
