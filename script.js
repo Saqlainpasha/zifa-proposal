@@ -1,11 +1,11 @@
-
+alert("Zifa website JavaScript is loading!");
 /* ═══════════════════════════════════════════════
    Zifa's Proposal — script.js
    Saqlain 💌 — clean + commented
    ═══════════════════════════════════════════════ */
 
 'use strict';
-alert("Zifa website JavaScript is loading!");
+
 const $ = (id) => document.getElementById(id);
 
 /* ── Elements ── */
