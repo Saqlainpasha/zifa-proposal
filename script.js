@@ -1,569 +1,594 @@
-alert("Zifa website JavaScript is loading!");
+
 /* ═══════════════════════════════════════════════
    Zifa's Proposal — script.js
-   Saqlain 💌 — clean + commented
+   Stable iPhone + desktop version
    ═══════════════════════════════════════════════ */
 
 'use strict';
 
 const $ = (id) => document.getElementById(id);
 
-/* ── Elements ── */
-const gate          = $('gate');
-const openBtn       = $('openBtn');
-const envelope      = $('envelope');
-const mainContent   = $('mainContent');
-const muteBtn       = $('muteBtn');
-const progressBar   = $('progressBar');
-const lilyEgg       = $('lilyEgg');
-const questionSec   = $('question');
-const questionTitle = $('questionTitle');
-const yesBtn        = $('yesBtn');
-const noBtn         = $('noBtn');
-const noMessage     = $('noMessage');
-const yesScreen     = $('yesScreen');
-const replayBtn     = $('replayBtn');
-const officialDate  = $('officialDate');
+document.addEventListener('DOMContentLoaded', () => {
 
-/* ══════════ 0. WELCOME GATE + MUSIC ══════════ */
+  /* ── Elements ── */
+  const gate = $('gate');
+  const openBtn = $('openBtn');
+  const envelope = $('envelope');
+  const mainContent = $('mainContent');
+  const muteBtn = $('muteBtn');
+  const progressBar = $('progressBar');
+  const lilyEgg = $('lilyEgg');
+  const questionSec = $('question');
+  const yesBtn = $('yesBtn');
+  const noBtn = $('noBtn');
+  const noMessage = $('noMessage');
+  const yesScreen = $('yesScreen');
+  const replayBtn = $('replayBtn');
+  const officialDate = $('officialDate');
 
-const music = new Audio('assets/music.mp3');
-music.loop = true;
-music.volume = 0;
+  /* ── Music ── */
+  const music = new Audio('assets/music.mp3');
+  music.loop = true;
+  music.volume = 0;
 
-const MUSIC_FULL = 0.5;
+  const MUSIC_FULL = 0.5;
+  let musicMuted = false;
+  let musicStarted = false;
 
-let musicMuted = false;
-let musicStarted = false;
+  function fadeMusic(target, duration = 2000) {
+    const start = music.volume;
+    const steps = 30;
+    let i = 0;
 
-function fadeMusic(target, durationMs = 2000) {
-  const startVol = music.volume;
-  const steps = 30;
-  let i = 0;
+    clearInterval(fadeMusic.timer);
 
-  clearInterval(fadeMusic._timer);
+    fadeMusic.timer = setInterval(() => {
+      i++;
+      music.volume = Math.max(0, Math.min(1,
+        start + (target - start) * (i / steps)
+      ));
 
-  fadeMusic._timer = setInterval(() => {
-    i++;
-
-    music.volume = Math.max(0, Math.min(1,
-      startVol + (target - startVol) * (i / steps)
-    ));
-
-    if (i >= steps) {
-      music.volume = target;
-      clearInterval(fadeMusic._timer);
-    }
-  }, durationMs / steps);
-}
-
-/* Open website — supports mouse, touch and keyboard */
-function openSite(e) {
-  alert("Open button clicked!");
-  if (e) e.preventDefault();
-
-  if (gate.classList.contains('opened')) return;
-
-  gate.classList.add('opened');
-  mainContent.hidden = false;
-  muteBtn.hidden = false;
-
-  music.play().then(() => {
-    musicStarted = true;
-    fadeMusic(musicMuted ? 0 : MUSIC_FULL, 2000);
-  }).catch((err) => {
-    console.log('Music playback issue:', err);
-  });
-
-  setTimeout(() => {
-    gate.remove();
-  }, 900);
-}
-
-/* Open button */
-openBtn.addEventListener('click', openSite);
-
-/* Envelope */
-envelope.addEventListener('click', openSite);
-
-envelope.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') {
-    openSite(e);
+      if (i >= steps) {
+        music.volume = target;
+        clearInterval(fadeMusic.timer);
+      }
+    }, duration / steps);
   }
-});
 
-/* Mute / unmute */
-muteBtn.addEventListener('click', () => {
-  musicMuted = !musicMuted;
+  /* ══════════ OPEN WEBSITE ══════════ */
 
-  fadeMusic(musicMuted ? 0 : MUSIC_FULL, 400);
+  let siteOpened = false;
 
-  muteBtn.textContent = musicMuted ? '🔇' : '🎵';
-  muteBtn.classList.toggle('muted', musicMuted);
-});
-
-/* ══════════ VIDEO: MUSIC DUCKING ══════════ */
-
-function setupVideo(videoId, playBtnId) {
-  const video = $(videoId);
-  const btn = $(playBtnId);
-
-  if (!video || !btn) return;
-
-  btn.addEventListener('click', () => {
-    if (video.paused) video.play().catch(() => {});
-    else video.pause();
-  });
-
-  video.addEventListener('play', () => {
-    btn.classList.add('hidden');
-    if (musicStarted && !musicMuted) fadeMusic(0.1, 600);
-  });
-
-  video.addEventListener('pause', () => {
-    btn.classList.remove('hidden');
-    if (musicStarted && !musicMuted) fadeMusic(MUSIC_FULL, 600);
-  });
-
-  video.addEventListener('ended', () => {
-    btn.classList.remove('hidden');
-    if (musicStarted && !musicMuted) fadeMusic(MUSIC_FULL, 600);
-  });
-}
-
-setupVideo('sunscreenVideo', 'sunscreenPlay');
-setupVideo('memoriesVideo', 'memoriesPlay');
-
-/* ══════════ SCROLL PROGRESS BAR ══════════ */
-
-window.addEventListener('scroll', () => {
-  const h = document.documentElement;
-  const max = h.scrollHeight - h.clientHeight;
-
-  progressBar.style.width =
-    (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
-}, { passive: true });
-
-/* ══════════ SCROLL REVEAL ══════════ */
-
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach((e) => {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-      revealObserver.unobserve(e.target);
+  function openSite(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-  });
-}, { threshold: 0.15 });
 
-document.querySelectorAll('.reveal').forEach((el) => {
-  revealObserver.observe(el);
-});
+    if (siteOpened) return;
+    siteOpened = true;
 
-/* ══════════ FINAL QUESTION: DIM BG + PULSE ══════════ */
+    if (gate) {
+      gate.classList.add('opened');
+    }
 
-new IntersectionObserver((entries) => {
-  entries.forEach((e) => {
-    document.body.classList.toggle(
-      'question-active',
-      e.isIntersecting
-    );
-  });
-}, { threshold: 0.4 }).observe(questionSec);
+    if (mainContent) {
+      mainContent.hidden = false;
+      mainContent.style.display = 'block';
+    }
 
-/* ══════════ HIDDEN LILY EASTER EGG ══════════ */
+    if (muteBtn) {
+      muteBtn.hidden = false;
+    }
 
-let eggTaps = 0;
-let eggTimer;
-
-lilyEgg.addEventListener('click', () => {
-  eggTaps++;
-
-  clearTimeout(eggTimer);
-
-  eggTimer = setTimeout(() => {
-    eggTaps = 0;
-  }, 1200);
-
-  if (eggTaps >= 3) {
-    eggTaps = 0;
-
-    const toast = document.createElement('div');
-    toast.className = 'egg-toast';
-    toast.textContent =
-      'Tumhara favourite phool, mere favourite insaan ke liye 🌸';
-
-    document.body.appendChild(toast);
-
-    requestAnimationFrame(() => toast.classList.add('show'));
+    music.play().then(() => {
+      musicStarted = true;
+      fadeMusic(musicMuted ? 0 : MUSIC_FULL, 2000);
+    }).catch((err) => {
+      console.log('Music playback issue:', err);
+    });
 
     setTimeout(() => {
-      toast.classList.remove('show');
-
-      setTimeout(() => toast.remove(), 600);
-    }, 3200);
+      if (gate) gate.remove();
+    }, 900);
   }
-});
 
-/* ══════════ 7. NO BUTTON — THE DODGE ══════════ */
+  if (openBtn) {
+    openBtn.addEventListener('click', openSite);
+    openBtn.addEventListener('touchend', openSite, { passive: false });
+  }
 
-const noMessages = [
-  'Arre arre, galat button 😜',
-  'Zifa, ek baar aur socho...',
-  'Ye wala chalta hi nahi 🙈',
-  'Dil se bolo na ❤️',
-  'Saqlain ro dega 🥺',
-];
+  if (envelope) {
+    envelope.addEventListener('click', openSite);
 
-let noAttempts = 0;
+    envelope.addEventListener('touchend', openSite, {
+      passive: false
+    });
 
-const MAX_ATTEMPTS = 8;
-const SAFE_MARGIN = 16;
-const BTN_GAP = 24;
+    envelope.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        openSite(e);
+      }
+    });
+  }
 
-function rectsOverlap(a, b, gap) {
-  return !(
-    a.right + gap < b.left ||
-    b.right + gap < a.left ||
-    a.bottom + gap < b.top ||
-    b.bottom + gap < a.top
-  );
-}
+  /* ── Mute button ── */
+  if (muteBtn) {
+    muteBtn.addEventListener('click', () => {
+      musicMuted = !musicMuted;
+      fadeMusic(musicMuted ? 0 : MUSIC_FULL, 400);
 
-function dodgeNo() {
-  const btnW = noBtn.offsetWidth;
-  const btnH = noBtn.offsetHeight;
+      muteBtn.textContent = musicMuted ? '🔇' : '🎵';
+      muteBtn.classList.toggle('muted', musicMuted);
+    });
+  }
 
-  const maxX = window.innerWidth - btnW - SAFE_MARGIN;
-  const maxY = window.innerHeight - btnH - SAFE_MARGIN;
+  /* ══════════ VIDEO CONTROLS ══════════ */
 
-  const yesRect = yesBtn.getBoundingClientRect();
+  function setupVideo(videoId, buttonId) {
+    const video = $(videoId);
+    const button = $(buttonId);
 
-  let placed = false;
+    if (!video || !button) return;
 
-  for (let tries = 0; tries < 30 && !placed; tries++) {
-    const x = SAFE_MARGIN +
-      Math.random() * Math.max(0, maxX - SAFE_MARGIN);
+    button.addEventListener('click', () => {
+      if (video.paused) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
 
-    const y = SAFE_MARGIN +
-      Math.random() * Math.max(0, maxY - SAFE_MARGIN);
+    video.addEventListener('play', () => {
+      button.classList.add('hidden');
+      if (musicStarted && !musicMuted) fadeMusic(0.1, 600);
+    });
 
-    const candidate = {
-      left: x,
-      top: y,
-      right: x + btnW,
-      bottom: y + btnH
-    };
-
-    if (!rectsOverlap(candidate, yesRect, BTN_GAP)) {
-      noBtn.style.left = x + 'px';
-      noBtn.style.top = y + 'px';
-      placed = true;
+    function restoreMusic() {
+      button.classList.remove('hidden');
+      if (musicStarted && !musicMuted) {
+        fadeMusic(MUSIC_FULL, 600);
+      }
     }
+
+    video.addEventListener('pause', restoreMusic);
+    video.addEventListener('ended', restoreMusic);
   }
 
-  return placed;
-}
+  setupVideo('sunscreenVideo', 'sunscreenPlay');
+  setupVideo('memoriesVideo', 'memoriesPlay');
 
-function handleNoAttempt(e) {
-  if (noAttempts >= MAX_ATTEMPTS) return;
+  /* ══════════ SCROLL PROGRESS ══════════ */
 
-  e.preventDefault();
-  e.stopPropagation();
+  if (progressBar) {
+    window.addEventListener('scroll', () => {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
 
-  noAttempts++;
-
-  noBtn.classList.add('dodging');
-
-  dodgeNo();
-
-  noMessage.textContent =
-    noMessages[(noAttempts - 1) % noMessages.length];
-
-  const noScale = Math.max(0.5, 1 - 0.08 * noAttempts);
-  const yesScale = 1 + 0.08 * noAttempts;
-
-  noBtn.style.transform = `scale(${noScale})`;
-
-  const yesCurrentW = yesBtn.offsetWidth;
-  const yesMaxW = window.innerWidth * 0.9;
-
-  yesBtn.style.width = Math.min(
-    yesCurrentW * (
-      yesScale / (1 + 0.08 * (noAttempts - 1))
-    ),
-    yesMaxW
-  ) + 'px';
-
-  yesBtn.style.fontSize =
-    Math.min(18 + noAttempts * 1.5, 26) + 'px';
-
-  if (noAttempts >= MAX_ATTEMPTS) {
-    noBtn.textContent = 'Okay, YES 😌';
-    noMessage.textContent = 'Maan hi gaye na? ❤️';
+      progressBar.style.width =
+        (max > 0 ? h.scrollTop / max * 100 : 0) + '%';
+    }, { passive: true });
   }
-}
 
-/* Touch + mouse */
-noBtn.addEventListener(
-  'touchstart',
-  handleNoAttempt,
-  { passive: false }
-);
+  /* ══════════ SCROLL REVEAL ══════════ */
 
-noBtn.addEventListener('touchend', (e) => {
-  e.preventDefault();
-}, { passive: false });
+  if ('IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
 
-noBtn.addEventListener('mouseover', handleNoAttempt);
+    document.querySelectorAll('.reveal').forEach((el) => {
+      revealObserver.observe(el);
+    });
 
-noBtn.addEventListener('click', (e) => {
-  if (noAttempts < MAX_ATTEMPTS) {
-    e.preventDefault();
-    handleNoAttempt(e);
+    if (questionSec) {
+      new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          document.body.classList.toggle(
+            'question-active',
+            entry.isIntersecting
+          );
+        });
+      }, { threshold: 0.4 }).observe(questionSec);
+    }
   } else {
-    sayYes();
+    document.querySelectorAll('.reveal').forEach((el) => {
+      el.classList.add('visible');
+    });
   }
-});
 
-/* ══════════ 8. YES → CONFETTI + RESULT SCREEN ══════════ */
+  /* ══════════ LILY EASTER EGG ══════════ */
 
-function sayYes() {
-  if (navigator.vibrate) navigator.vibrate(200);
+  if (lilyEgg) {
+    let eggTaps = 0;
+    let eggTimer;
 
-  startConfetti();
-  showYesScreen();
-}
+    lilyEgg.addEventListener('click', () => {
+      eggTaps++;
+      clearTimeout(eggTimer);
 
-yesBtn.addEventListener('click', sayYes);
+      eggTimer = setTimeout(() => {
+        eggTaps = 0;
+      }, 1200);
 
-/* Live date */
-function fillOfficialDate() {
-  const d = new Date();
+      if (eggTaps >= 3) {
+        eggTaps = 0;
 
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        const toast = document.createElement('div');
+        toast.className = 'egg-toast';
+        toast.textContent =
+          'Tumhara favourite phool, mere favourite insaan ke liye 🌸';
+
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => toast.classList.add('show'));
+
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 600);
+        }, 3200);
+      }
+    });
+  }
+
+  /* ══════════ NO BUTTON — DODGE ══════════ */
+
+  const noMessages = [
+    'Arre arre, galat button 😜',
+    'Zifa, ek baar aur socho...',
+    'Ye wala chalta hi nahi 🙈',
+    'Dil se bolo na ❤️',
+    'Saqlain ro dega 🥺'
   ];
 
-  officialDate.textContent =
-    `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-}
+  let noAttempts = 0;
+  const MAX_ATTEMPTS = 8;
+  const SAFE_MARGIN = 16;
+  const BTN_GAP = 24;
 
-function showYesScreen() {
-  fillOfficialDate();
+  function rectsOverlap(a, b, gap) {
+    return !(
+      a.right + gap < b.left ||
+      b.right + gap < a.left ||
+      a.bottom + gap < b.top ||
+      b.bottom + gap < a.top
+    );
+  }
 
-  yesScreen.hidden = false;
+  function dodgeNo() {
+    if (!noBtn || !yesBtn) return;
 
-  fadeMusic(0, 1500);
+    const btnW = noBtn.offsetWidth;
+    const btnH = noBtn.offsetHeight;
 
-  requestAnimationFrame(() => {
-    yesScreen.classList.add('show');
-  });
+    const maxX = window.innerWidth - btnW - SAFE_MARGIN;
+    const maxY = window.innerHeight - btnH - SAFE_MARGIN;
 
-  document.body.style.overflow = 'hidden';
-}
+    const yesRect = yesBtn.getBoundingClientRect();
 
-/* Replay */
-replayBtn.addEventListener('click', () => {
-  stopConfetti();
+    for (let tries = 0; tries < 30; tries++) {
+      const x = SAFE_MARGIN +
+        Math.random() * Math.max(0, maxX - SAFE_MARGIN);
 
-  yesScreen.classList.remove('show');
-  document.body.style.overflow = '';
+      const y = SAFE_MARGIN +
+        Math.random() * Math.max(0, maxY - SAFE_MARGIN);
 
-  setTimeout(() => {
-    yesScreen.hidden = true;
+      const candidate = {
+        left: x,
+        top: y,
+        right: x + btnW,
+        bottom: y + btnH
+      };
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-
-    if (musicStarted && !musicMuted) {
-      fadeMusic(MUSIC_FULL, 1000);
+      if (!rectsOverlap(candidate, yesRect, BTN_GAP)) {
+        noBtn.style.position = 'fixed';
+        noBtn.style.left = x + 'px';
+        noBtn.style.top = y + 'px';
+        return;
+      }
     }
-  }, 1000);
-});
+  }
 
-/* ══════════ CONFETTI + LILY PETAL BURST ══════════ */
+  function handleNoAttempt(e) {
+    if (!noBtn || !yesBtn || noAttempts >= MAX_ATTEMPTS) return;
 
-const confettiCanvas = $('confettiCanvas');
-const cctx = confettiCanvas.getContext('2d');
+    e.preventDefault();
+    e.stopPropagation();
 
-let confettiPieces = [];
-let confettiRunning = false;
+    noAttempts++;
+    noBtn.classList.add('dodging');
+    dodgeNo();
 
-const CONFETTI_COLORS = [
-  '#F8D7E0', '#E6DDF5', '#DCE8D8',
-  '#FFF8F2', '#F8AFC4', '#C9B6F2'
-];
+    if (noMessage) {
+      noMessage.textContent =
+        noMessages[(noAttempts - 1) % noMessages.length];
+    }
 
-const CONFETTI_EMOJI = ['🌸', '❤️'];
+    const noScale = Math.max(0.5, 1 - 0.08 * noAttempts);
+    const yesScale = 1 + 0.08 * noAttempts;
 
-function sizeConfettiCanvas() {
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
+    noBtn.style.transform = `scale(${noScale})`;
 
-function startConfetti() {
-  sizeConfettiCanvas();
+    const yesCurrentW = yesBtn.offsetWidth;
+    const yesMaxW = window.innerWidth * 0.9;
 
-  confettiPieces = [];
+    yesBtn.style.width = Math.min(
+      yesCurrentW * (
+        yesScale / (1 + 0.08 * (noAttempts - 1))
+      ),
+      yesMaxW
+    ) + 'px';
 
-  const count = window.innerWidth < 500 ? 90 : 140;
+    yesBtn.style.fontSize =
+      Math.min(18 + noAttempts * 1.5, 26) + 'px';
 
-  for (let i = 0; i < count; i++) {
-    confettiPieces.push({
-      x: Math.random() * confettiCanvas.width,
-      y: -20 - Math.random() * confettiCanvas.height * 0.5,
-      w: 6 + Math.random() * 8,
-      h: 8 + Math.random() * 10,
-      vy: 1.2 + Math.random() * 2.2,
-      vx: -1 + Math.random() * 2,
-      rot: Math.random() * Math.PI * 2,
-      vr: -0.05 + Math.random() * 0.1,
-      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-      emoji: i % 5 === 0,
-      glyph: CONFETTI_EMOJI[i % 2]
+    if (noAttempts >= MAX_ATTEMPTS) {
+      noBtn.textContent = 'Okay, YES 😌';
+      if (noMessage) {
+        noMessage.textContent = 'Maan hi gaye na? ❤️';
+      }
+    }
+  }
+
+  if (noBtn) {
+    noBtn.addEventListener('click', (e) => {
+      if (noAttempts < MAX_ATTEMPTS) {
+        handleNoAttempt(e);
+      } else {
+        sayYes();
+      }
+    });
+
+    noBtn.addEventListener('touchstart', handleNoAttempt, {
+      passive: false
+    });
+
+    noBtn.addEventListener('mouseover', handleNoAttempt);
+  }
+
+  /* ══════════ YES BUTTON ══════════ */
+
+  function sayYes() {
+    if (navigator.vibrate) navigator.vibrate(200);
+    startConfetti();
+    showYesScreen();
+  }
+
+  if (yesBtn) {
+    yesBtn.addEventListener('click', sayYes);
+  }
+
+  function fillOfficialDate() {
+    if (!officialDate) return;
+
+    const d = new Date();
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    officialDate.textContent =
+      `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function showYesScreen() {
+    if (!yesScreen) return;
+
+    fillOfficialDate();
+    yesScreen.hidden = false;
+
+    fadeMusic(0, 1500);
+
+    requestAnimationFrame(() => {
+      yesScreen.classList.add('show');
+    });
+
+    document.body.style.overflow = 'hidden';
+  }
+
+  if (replayBtn && yesScreen) {
+    replayBtn.addEventListener('click', () => {
+      stopConfetti();
+
+      yesScreen.classList.remove('show');
+      document.body.style.overflow = '';
+
+      setTimeout(() => {
+        yesScreen.hidden = true;
+
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+
+        if (musicStarted && !musicMuted) {
+          fadeMusic(MUSIC_FULL, 1000);
+        }
+      }, 1000);
     });
   }
 
-  if (!confettiRunning) {
-    confettiRunning = true;
-    requestAnimationFrame(confettiLoop);
+  /* ══════════ CONFETTI ══════════ */
+
+  const confettiCanvas = $('confettiCanvas');
+  const cctx = confettiCanvas
+    ? confettiCanvas.getContext('2d')
+    : null;
+
+  let confettiPieces = [];
+  let confettiRunning = false;
+
+  const CONFETTI_COLORS = [
+    '#F8D7E0', '#E6DDF5', '#DCE8D8',
+    '#FFF8F2', '#F8AFC4', '#C9B6F2'
+  ];
+
+  const CONFETTI_EMOJI = ['🌸', '❤️'];
+
+  function sizeConfettiCanvas() {
+    if (!confettiCanvas) return;
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
   }
-}
 
-function confettiLoop() {
-  cctx.clearRect(
-    0, 0,
-    confettiCanvas.width,
-    confettiCanvas.height
-  );
+  function startConfetti() {
+    if (!confettiCanvas || !cctx) return;
 
-  confettiPieces = confettiPieces.filter(
-    (p) => p.y < confettiCanvas.height + 30
-  );
+    sizeConfettiCanvas();
+    confettiPieces = [];
 
-  confettiPieces.forEach((p) => {
-    p.y += p.vy;
-    p.x += p.vx + Math.sin(p.y * 0.02);
-    p.rot += p.vr;
+    const count = window.innerWidth < 500 ? 90 : 140;
 
-    cctx.save();
+    for (let i = 0; i < count; i++) {
+      confettiPieces.push({
+        x: Math.random() * confettiCanvas.width,
+        y: -20 - Math.random() * confettiCanvas.height * 0.5,
+        w: 6 + Math.random() * 8,
+        h: 8 + Math.random() * 10,
+        vy: 1.2 + Math.random() * 2.2,
+        vx: -1 + Math.random() * 2,
+        rot: Math.random() * Math.PI * 2,
+        vr: -0.05 + Math.random() * 0.1,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        emoji: i % 5 === 0,
+        glyph: CONFETTI_EMOJI[i % 2]
+      });
+    }
 
-    cctx.translate(p.x, p.y);
-    cctx.rotate(p.rot);
+    if (!confettiRunning) {
+      confettiRunning = true;
+      requestAnimationFrame(confettiLoop);
+    }
+  }
 
-    if (p.emoji) {
-      cctx.font = '16px serif';
-      cctx.fillText(p.glyph, -8, 0);
+  function confettiLoop() {
+    if (!cctx || !confettiCanvas) return;
+
+    cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+    confettiPieces = confettiPieces.filter(
+      (p) => p.y < confettiCanvas.height + 30
+    );
+
+    confettiPieces.forEach((p) => {
+      p.y += p.vy;
+      p.x += p.vx + Math.sin(p.y * 0.02);
+      p.rot += p.vr;
+
+      cctx.save();
+      cctx.translate(p.x, p.y);
+      cctx.rotate(p.rot);
+
+      if (p.emoji) {
+        cctx.font = '16px serif';
+        cctx.fillText(p.glyph, -8, 0);
+      } else {
+        cctx.fillStyle = p.color;
+        cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+
+      cctx.restore();
+    });
+
+    if (confettiPieces.length > 0) {
+      requestAnimationFrame(confettiLoop);
     } else {
-      cctx.fillStyle = p.color;
-      cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      confettiRunning = false;
+      cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
     }
-
-    cctx.restore();
-  });
-
-  if (confettiPieces.length > 0) {
-    requestAnimationFrame(confettiLoop);
-  } else {
-    confettiRunning = false;
-
-    cctx.clearRect(
-      0, 0,
-      confettiCanvas.width,
-      confettiCanvas.height
-    );
-  }
-}
-
-function stopConfetti() {
-  confettiPieces = [];
-}
-
-window.addEventListener('resize', sizeConfettiCanvas);
-
-/* ══════════ GENTLE FALLING PETALS ══════════ */
-
-const petalCanvas = $('petalCanvas');
-const pctx = petalCanvas.getContext('2d');
-
-const reduceMotion = window.matchMedia(
-  '(prefers-reduced-motion: reduce)'
-).matches;
-
-let petals = [];
-
-function sizePetalCanvas() {
-  petalCanvas.width = window.innerWidth;
-  petalCanvas.height = window.innerHeight;
-}
-
-function makePetal(anywhere) {
-  return {
-    x: Math.random() * petalCanvas.width,
-    y: anywhere ? Math.random() * petalCanvas.height : -20,
-    s: 10 + Math.random() * 14,
-    vy: 0.3 + Math.random() * 0.6,
-    sway: Math.random() * Math.PI * 2,
-    swaySpeed: 0.005 + Math.random() * 0.01,
-    alpha: 0.25 + Math.random() * 0.3
-  };
-}
-
-function petalLoop() {
-  pctx.clearRect(
-    0, 0,
-    petalCanvas.width,
-    petalCanvas.height
-  );
-
-  const maxPetals = window.innerWidth < 500 ? 12 : 20;
-
-  while (petals.length < maxPetals) {
-    petals.push(makePetal(false));
   }
 
-  petals.forEach((p) => {
-    p.sway += p.swaySpeed * 16;
-    p.y += p.vy;
-    p.x += Math.sin(p.sway) * 0.4;
+  function stopConfetti() {
+    confettiPieces = [];
+  }
 
-    if (p.y > petalCanvas.height + 20) {
-      Object.assign(p, makePetal(false));
+  if (confettiCanvas) {
+    sizeConfettiCanvas();
+    window.addEventListener('resize', sizeConfettiCanvas);
+  }
+
+  /* ══════════ FALLING PETALS ══════════ */
+
+  const petalCanvas = $('petalCanvas');
+  const pctx = petalCanvas
+    ? petalCanvas.getContext('2d')
+    : null;
+
+  const reduceMotion = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+
+  let petals = [];
+
+  function sizePetalCanvas() {
+    if (!petalCanvas) return;
+    petalCanvas.width = window.innerWidth;
+    petalCanvas.height = window.innerHeight;
+  }
+
+  function makePetal(anywhere) {
+    return {
+      x: Math.random() * petalCanvas.width,
+      y: anywhere ? Math.random() * petalCanvas.height : -20,
+      s: 10 + Math.random() * 14,
+      vy: 0.3 + Math.random() * 0.6,
+      sway: Math.random() * Math.PI * 2,
+      swaySpeed: 0.005 + Math.random() * 0.01,
+      alpha: 0.25 + Math.random() * 0.3
+    };
+  }
+
+  function petalLoop() {
+    if (!petalCanvas || !pctx) return;
+
+    pctx.clearRect(0, 0, petalCanvas.width, petalCanvas.height);
+
+    const maxPetals = window.innerWidth < 500 ? 12 : 20;
+
+    while (petals.length < maxPetals) {
+      petals.push(makePetal(false));
     }
 
-    pctx.save();
+    petals.forEach((p) => {
+      p.sway += p.swaySpeed * 16;
+      p.y += p.vy;
+      p.x += Math.sin(p.sway) * 0.4;
 
-    pctx.translate(p.x, p.y);
-    pctx.rotate(p.sway);
-    pctx.globalAlpha = p.alpha;
+      if (p.y > petalCanvas.height + 20) {
+        Object.assign(p, makePetal(false));
+      }
 
-    pctx.fillStyle =
-      Math.random() < 0.5 ? '#F8AFC4' : '#C9B6F2';
+      pctx.save();
+      pctx.translate(p.x, p.y);
+      pctx.rotate(p.sway);
+      pctx.globalAlpha = p.alpha;
 
-    pctx.beginPath();
+      pctx.fillStyle =
+        Math.random() < 0.5 ? '#F8AFC4' : '#C9B6F2';
 
-    pctx.ellipse(
-      0, 0,
-      p.s / 2,
-      p.s / 3.2,
-      0, 0,
-      Math.PI * 2
-    );
+      pctx.beginPath();
+      pctx.ellipse(0, 0, p.s / 2, p.s / 3.2, 0, 0, Math.PI * 2);
+      pctx.fill();
+      pctx.restore();
+    });
 
-    pctx.fill();
-    pctx.restore();
-  });
+    requestAnimationFrame(petalLoop);
+  }
 
-  requestAnimationFrame(petalLoop);
-}
+  if (petalCanvas) {
+    sizePetalCanvas();
+    window.addEventListener('resize', sizePetalCanvas);
 
-sizePetalCanvas();
+    if (!reduceMotion) {
+      requestAnimationFrame(petalLoop);
+    }
+  }
 
-if (!reduceMotion) {
-  requestAnimationFrame(petalLoop);
-}
+  console.log('Zifa website initialized successfully 💌');
 
-window.addEventListener('resize', sizePetalCanvas);
+});
